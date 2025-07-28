@@ -266,16 +266,14 @@
         </select>
       </div>
     </div>
-    <!-- Zoom doesn't work while the image is mirrored, so only works with special display driver.
     <div id="zoom_div">
-      <label>Calibration</label>
+      <label>Zoom/X/Y</label>
       <div style="display: flex; flex-direction: column;">
         <input class="zoom_slider" type="range" id="zoom" min="10" max="15" value="10" onchange="updateZoom()">
         <input class="zoom_slider" type="range" id="zoom_x" min="0" max="255" value="0" onchange="updateZoom()">
         <input class="zoom_slider" type="range" id="zoom_y" min="0" max="191" value="0" onchange="updateZoom()">
       </div>
     </div>
-    -->
   </div>
   <script>
     function updateZoom() {
@@ -293,6 +291,14 @@
     }
 
     function updateValue(key, value) {
+      if (key === "flip_mode") {
+        const zoom_div = document.getElementById("zoom_div");
+        if (value === "0") {
+          zoom_div.style.display = "flex";
+        } else {
+          zoom_div.style.display = "none";
+        }
+      }
       const parsedValue = parseInt(value, 10);
       console.log(`Updating ${key} with value: ${parsedValue}`);
       fetch("/set", {
@@ -344,6 +350,15 @@
               const select = document.getElementById("active_profile");
               select.value = data[key];
           } else {
+            if (key === "flip_mode") {
+              const zoom_div = document.getElementById("zoom_div");
+              if (data[key] === "0") {
+                zoom_div.style.display = "flex";
+              } else {
+                zoom_div.style.display = "none";
+              }
+            }
+
             const element = document.getElementById(key);
             if (element === null) {
               console.log("Cant find " + key);

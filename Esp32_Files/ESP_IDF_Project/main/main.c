@@ -106,7 +106,7 @@ static void loop_task(void *pvParameters) {
     adc_channel_t channel;
     esp_err_t err = adc_oneshot_io_to_channel(POTI_PIN, &unit, &channel);
     if (err != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to get info about GPIO5");
+        ESP_LOGE(TAG, "Failed to get ADC info about GPIO%d", (int)POTI_PIN);
     }
 
     int adc_raw;
@@ -136,9 +136,8 @@ static void loop_task(void *pvParameters) {
         }
         if (stored.presets[stored.active_preset].breathing && (esp_timer_get_time() - breathing_time_out) >= breathing_pause_time_us) {
             int x_ms = (esp_timer_get_time() - breathing_time_out - breathing_pause_time_us) / 1000;
-            float value = (cos(((float)x_ms / 1000.0) * M_PI) + 1.0) / 2;
-            // ESP_LOGW(TAG, "Set: %d from %f (value) and %d (max gain)", (int)(value * (float)max_gain), value, max_gain);
-            Mini2_set_brightness(&cam, (int)(value * (float)max_gain));
+            float wave_value = (cos(((float)x_ms / 1000.0) * M_PI) + 1.0) / 2.0;
+            Mini2_set_brightness(&cam, (int)(wave_value * (float)max_gain));
         }
         if (stored.active_preset != last_seen_preset) {
             Mini2_apply_preset(&cam, &stored.presets[stored.active_preset]);
@@ -149,137 +148,137 @@ static void loop_task(void *pvParameters) {
     
 }
 
-/*DIY COTI specific*/
-
 static esp_err_t post_handler(httpd_req_t *req) {
     int ret;
 
     char* buf = (char*)malloc(req->content_len);
 
+    if (buf == NULL) {
+        ESP_LOGE(TAG, "Unable to malloc buffer for HTTP req");
+        return ESP_FAIL;
+    }
+
     jparse_ctx_t jctx;
 
-    if (buf != NULL) {
-        int bytes_read = httpd_req_recv(req, buf, req->content_len);
+    int bytes_read = httpd_req_recv(req, buf, req->content_len);
 
-        ESP_LOG_BUFFER_HEXDUMP(TAG, buf, bytes_read, ESP_LOG_WARN);
+    ESP_LOG_BUFFER_HEXDUMP(TAG, buf, bytes_read, ESP_LOG_WARN);
 
-        ret = json_parse_start(&jctx, buf, bytes_read);
-        if (ret != OS_SUCCESS) {
-            ESP_LOGE(TAG, "Parser failed");
-            return ESP_FAIL;
-        }
-        
-        int value;
-        ret = json_obj_get_int(&jctx, "pseudo_color", &value);
-        if (ret == OS_SUCCESS) {
-            Mini2_set_color_pallet(&cam, (enum PseudoColor)value);
-            stored.presets[stored.active_preset].pseudo_color = (enum PseudoColor)value;
-        }
-        ret = json_obj_get_int(&jctx, "scene_mode", &value);
-        if (ret == OS_SUCCESS) {
-            Mini2_set_scene_mode(&cam, (enum SceneMode)value);
-            stored.presets[stored.active_preset].scene_mode = (enum PseudoColor)value;
-        }
-        ret = json_obj_get_int(&jctx, "flip_mode", &value);
-        if (ret == OS_SUCCESS) {
-            Mini2_set_flip_mode(&cam, (enum FlipMode)value);
-            stored.presets[stored.active_preset].flip_mode = (enum FlipMode)value;
-        }
-        ret = json_obj_get_int(&jctx, "av_format", &value);
-        if (ret == OS_SUCCESS) {
-            Mini2_set_analog_video_format(&cam, (enum AnalogVideoFormat)value);
-            stored.presets[stored.active_preset].av_format = (enum PseudoColor)value;
-        }
-        /* Brightness is done via Poti, so no need
-                ret = json_obj_get_int(&jctx, "brightness", &value);
-        if (ret == OS_SUCCESS) {
-            Mini2_set_brightness(&cam, value);
-            stored.presets[stored.active_preset].brightness = value;
-        }
-        */
-        ret = json_obj_get_int(&jctx, "contrast", &value);
-        if (ret == OS_SUCCESS) {
-            Mini2_set_contrast(&cam, value);
-            stored.presets[stored.active_preset].contrast = value;
-        }
-        ret = json_obj_get_int(&jctx, "edge_enhancment_gear", &value);
-        if (ret == OS_SUCCESS) {
-            Mini2_set_edge_enhancment(&cam, value);
-            stored.presets[stored.active_preset].edge_enhancment_gear = value;
-        }
-        ret = json_obj_get_int(&jctx, "detail_enhancement_gear", &value);
-        if (ret == OS_SUCCESS) {
-            Mini2_set_detail_enhancement(&cam, value);
-            stored.presets[stored.active_preset].detail_enhancement_gear = value;
-        }
-
-        bool bool_val;
-        ret = json_obj_get_bool(&jctx, "burn_protection_en", &bool_val);
-        if (ret == OS_SUCCESS) {
-            Mini2_set_burn_protection(&cam, bool_val);
-            stored.presets[stored.active_preset].burn_protection_en = bool_val;
-        }
-        ret = json_obj_get_bool(&jctx, "auto_shutter_en", &bool_val);
-        if (ret == OS_SUCCESS) {
-            Mini2_set_auto_shutter(&cam, bool_val);
-            stored.presets[stored.active_preset].auto_shutter_en = bool_val;
-        }
-
-        ret = json_obj_get_bool(&jctx, "breathing", &bool_val);
-        if (ret == OS_SUCCESS) {
-            stored.presets[stored.active_preset].breathing = bool_val;
-        }
-
-        ret = json_obj_get_bool(&jctx, "preset_en", &bool_val);
-        if (ret == OS_SUCCESS) {
-            if (stored.active_preset == 0) {
-                stored.presets[stored.active_preset].preset_en = true; // Preset0 is always enabled.
-            } else {
-                stored.presets[stored.active_preset].preset_en = bool_val;
-            }
-        }
-
-        /* Conflicts with Mirror feature
-        ret = json_obj_get_object(&jctx, "zoom");
-        if (ret == OS_SUCCESS) {
-            int x, y, zoom;
-            if (json_obj_get_int(&jctx, "x", &x) == OS_SUCCESS && json_obj_get_int(&jctx, "y", &y) == OS_SUCCESS && json_obj_get_int(&jctx, "zoom", &zoom) == OS_SUCCESS) {
-                Mini2_set_point_zoom(&cam, (uint16_t)x, (uint16_t)y, (uint8_t)zoom);
-                stored.presets[stored.active_preset].zoom = zoom;
-                stored.presets[stored.active_preset].zoom_x = x;
-                stored.presets[stored.active_preset].zoom_y = y;
-            }
-            json_obj_leave_object(&jctx);
-        }
-        */
-
-        ret = json_obj_get_int(&jctx, "active_profile", &value);
-        if (ret == OS_SUCCESS) {
-            if ((0 <= value) && (value < PRESET_COUNT)) {
-                stored.active_preset = value;
-                Mini2_apply_preset(&cam, &stored.presets[stored.active_preset]);
-            } else {
-                ESP_LOGE(TAG, "Active profile number would be out-of-bounds!");
-            }   
-        }
-
-        ret = json_obj_get_bool(&jctx, "NUC", &bool_val);
-        if (ret == OS_SUCCESS && bool_val) {
-            Mini2_NUC(&cam);
-        }
-
-        ret = json_obj_get_bool(&jctx, "BG", &bool_val);
-        if (ret == OS_SUCCESS && bool_val) {
-            Mini2_Background_Correction(&cam);
-        }
-
-        ret = json_obj_get_bool(&jctx, "parameters_save", &bool_val);
-        if (ret == OS_SUCCESS && bool_val) {
-            Mini2_parameters_save(&cam);
-        }
-
-        httpd_resp_send_chunk(req, NULL, 0);
+    ret = json_parse_start(&jctx, buf, bytes_read);
+    if (ret != OS_SUCCESS) {
+        ESP_LOGE(TAG, "Parser failed");
+        return ESP_FAIL;
     }
+    
+    int value;
+    ret = json_obj_get_int(&jctx, "pseudo_color", &value);
+    if (ret == OS_SUCCESS) {
+        Mini2_set_color_pallet(&cam, (enum PseudoColor)value);
+        stored.presets[stored.active_preset].pseudo_color = (enum PseudoColor)value;
+        Mini2_set_flip_mode(&cam, stored.presets[stored.active_preset].flip_mode);
+    }
+    ret = json_obj_get_int(&jctx, "scene_mode", &value);
+    if (ret == OS_SUCCESS) {
+        Mini2_set_scene_mode(&cam, (enum SceneMode)value);
+        stored.presets[stored.active_preset].scene_mode = (enum PseudoColor)value;
+    }
+    ret = json_obj_get_int(&jctx, "flip_mode", &value);
+    if (ret == OS_SUCCESS) {
+        Mini2_set_flip_mode(&cam, (enum FlipMode)value);
+        stored.presets[stored.active_preset].flip_mode = (enum FlipMode)value;
+    }
+    ret = json_obj_get_int(&jctx, "av_format", &value);
+    if (ret == OS_SUCCESS) {
+        Mini2_set_analog_video_format(&cam, (enum AnalogVideoFormat)value);
+        stored.presets[stored.active_preset].av_format = (enum PseudoColor)value;
+    }
+    /* Brightness is done via Poti, so no need
+            ret = json_obj_get_int(&jctx, "brightness", &value);
+    if (ret == OS_SUCCESS) {
+        Mini2_set_brightness(&cam, value);
+        stored.presets[stored.active_preset].brightness = value;
+    }
+    */
+    ret = json_obj_get_int(&jctx, "contrast", &value);
+    if (ret == OS_SUCCESS) {
+        Mini2_set_contrast(&cam, value);
+        stored.presets[stored.active_preset].contrast = value;
+    }
+    ret = json_obj_get_int(&jctx, "edge_enhancment_gear", &value);
+    if (ret == OS_SUCCESS) {
+        Mini2_set_edge_enhancment(&cam, value);
+        stored.presets[stored.active_preset].edge_enhancment_gear = value;
+    }
+    ret = json_obj_get_int(&jctx, "detail_enhancement_gear", &value);
+    if (ret == OS_SUCCESS) {
+        Mini2_set_detail_enhancement(&cam, value);
+        stored.presets[stored.active_preset].detail_enhancement_gear = value;
+    }
+
+    bool bool_val;
+    ret = json_obj_get_bool(&jctx, "burn_protection_en", &bool_val);
+    if (ret == OS_SUCCESS) {
+        Mini2_set_burn_protection(&cam, bool_val);
+        stored.presets[stored.active_preset].burn_protection_en = bool_val;
+    }
+    ret = json_obj_get_bool(&jctx, "auto_shutter_en", &bool_val);
+    if (ret == OS_SUCCESS) {
+        Mini2_set_auto_shutter(&cam, bool_val);
+        stored.presets[stored.active_preset].auto_shutter_en = bool_val;
+    }
+
+    ret = json_obj_get_bool(&jctx, "breathing", &bool_val);
+    if (ret == OS_SUCCESS) {
+        stored.presets[stored.active_preset].breathing = bool_val;
+    }
+
+    ret = json_obj_get_bool(&jctx, "preset_en", &bool_val);
+    if (ret == OS_SUCCESS) {
+        if (stored.active_preset == 0) {
+            stored.presets[stored.active_preset].preset_en = true; // Preset0 is always enabled.
+        } else {
+            stored.presets[stored.active_preset].preset_en = bool_val;
+        }
+    }
+
+    ret = json_obj_get_object(&jctx, "zoom");
+    if (ret == OS_SUCCESS) {
+        int x, y, zoom;
+        if (json_obj_get_int(&jctx, "x", &x) == OS_SUCCESS && json_obj_get_int(&jctx, "y", &y) == OS_SUCCESS && json_obj_get_int(&jctx, "zoom", &zoom) == OS_SUCCESS) {
+            Mini2_set_point_zoom(&cam, (uint16_t)x, (uint16_t)y, (uint8_t)zoom);
+            stored.presets[stored.active_preset].zoom = zoom;
+            stored.presets[stored.active_preset].zoom_x = x;
+            stored.presets[stored.active_preset].zoom_y = y;
+        }
+        json_obj_leave_object(&jctx);
+    }
+
+    ret = json_obj_get_int(&jctx, "active_profile", &value);
+    if (ret == OS_SUCCESS) {
+        if ((0 <= value) && (value < PRESET_COUNT)) {
+            stored.active_preset = value;
+            Mini2_apply_preset(&cam, &stored.presets[stored.active_preset]);
+        } else {
+            ESP_LOGE(TAG, "Active profile number would be out-of-bounds!");
+        }   
+    }
+
+    ret = json_obj_get_bool(&jctx, "NUC", &bool_val);
+    if (ret == OS_SUCCESS && bool_val) {
+        Mini2_NUC(&cam);
+    }
+
+    ret = json_obj_get_bool(&jctx, "BG", &bool_val);
+    if (ret == OS_SUCCESS && bool_val) {
+        Mini2_Background_Correction(&cam);
+    }
+
+    ret = json_obj_get_bool(&jctx, "parameters_save", &bool_val);
+    if (ret == OS_SUCCESS && bool_val) {
+        Mini2_parameters_save(&cam);
+    }
+
+    httpd_resp_send_chunk(req, NULL, 0);
     
     json_parse_end(&jctx);
     free(buf);
@@ -310,6 +309,7 @@ static esp_err_t retireve_values(httpd_req_t *req) {
     \"zoom\": %u, \
     \"zoom_x\": %u, \
     \"zoom_y\": %u, \
+    \"av_format\": %u, \
     \"sensor_width\": %u, \
     \"sensor_height\": %u \
     }";
@@ -332,6 +332,7 @@ static esp_err_t retireve_values(httpd_req_t *req) {
         stored.presets[stored.active_preset].zoom,
         stored.presets[stored.active_preset].zoom_x,
         stored.presets[stored.active_preset].zoom_y,
+        stored.presets[stored.active_preset].av_format,
         cam.variant.sensor_width,
         cam.variant.sensor_height
     );
@@ -343,8 +344,6 @@ static esp_err_t retireve_values(httpd_req_t *req) {
     httpd_resp_send(req, out_json, res);
     return ESP_OK;
 }
-
-/*END DIY COTI specific*/
 
 static const httpd_uri_t retireve_values_route = {
     .uri       = "/get",

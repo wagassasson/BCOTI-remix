@@ -198,7 +198,6 @@ esp_err_t Mini2_Background_Correction(Mini2_t* cam) {
 void Mini2_apply_preset(Mini2_t* cam, value_preset_t* preset) {
     Mini2_set_color_pallet(cam, preset->pseudo_color);
     Mini2_set_scene_mode(cam, preset->scene_mode);
-    Mini2_set_flip_mode(cam, preset->flip_mode);
     Mini2_set_analog_video_format(cam, preset->av_format);
     // Mini2_set_brightness(cam, preset->brightness);
     Mini2_set_contrast(cam, preset->contrast);
@@ -206,6 +205,9 @@ void Mini2_apply_preset(Mini2_t* cam, value_preset_t* preset) {
     Mini2_set_detail_enhancement(cam, preset->detail_enhancement_gear);
     Mini2_set_burn_protection(cam, preset->burn_protection_en);
     Mini2_set_auto_shutter(cam, preset->auto_shutter_en);
-    // Mini2_set_point_zoom(cam, preset->zoom_x, preset->zoom_y, preset->zoom);
+    if (preset->flip_mode == No_Flip) {
+        Mini2_set_point_zoom(cam, preset->zoom_x, preset->zoom_y, preset->zoom);
+    }
     Mini2_set_detector_fps(cam, preset->fps);
+    Mini2_set_flip_mode(cam, preset->flip_mode);
 }
