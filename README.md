@@ -61,7 +61,7 @@ If you do end up buying these parts, and are happy with the end result, I'd appr
 
 Using a dark material which absorbs light instead of reflecting it is highly recommend.
 
-1. Print the `Body_Shell.step`, `PVS14_Lens_Clip.step`, and `Camera_Cage_x_x_deg.step` with a basic 0.12mm layer height profile.
+1. Print the `Body_Shell.step`, and `CameraCag.step` with a basic 0.12mm layer height profile.
 Change the following
     1. Wall-loops to 3x or 4x. 
     2. Infill to about 22% to 35%
