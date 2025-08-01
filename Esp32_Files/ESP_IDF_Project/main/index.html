@@ -215,6 +215,18 @@
         <input style="width: 300px;" type="range" id="detail_enhancement_gear" min="0" max="100" value="0" oninput="updateValue(this.id, this.value)">
       </div>
     </div>
+    <div id="breathing_div">
+      <label>Breathing</label>
+      <div>
+        <label class="switch">
+          <input id="breathing" onchange="updateValue(this.id, this.checked ? 1 : 0)" type="checkbox">
+          <span class="slider round"></span>
+        </label>
+      </div>
+    </div>
+  </div>
+  <div class="main">
+    Camera
     <div id="burnprotection_div">
       <label>Burn Protection</label>
       <div>
@@ -233,15 +245,6 @@
         </label>
       </div>
     </div>
-    <div id="breathing_div">
-      <label>Breathing</label>
-      <div>
-        <label class="switch">
-          <input id="breathing" onchange="updateValue(this.id, this.checked ? 1 : 0)" type="checkbox">
-          <span class="slider round"></span>
-        </label>
-      </div>
-    </div>
     <div id="corrected_div">
       <label>Calibration</label>
       <div>
@@ -255,6 +258,9 @@
         <button onclick="updateValue('parameters_save', true)">Save</button>
       </div>
     </div>
+  </div>
+  <div class="main">
+    Alignment
     <div id="flip_div">
       <label>Flip Mode</label>
       <div>
@@ -352,7 +358,7 @@
           } else {
             if (key === "flip_mode") {
               const zoom_div = document.getElementById("zoom_div");
-              if (data[key] === "0") {
+              if (data[key] === 0) {
                 zoom_div.style.display = "flex";
               } else {
                 zoom_div.style.display = "none";

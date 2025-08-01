@@ -67,20 +67,23 @@ typedef struct value_preset_t{
     bool preset_en;
     enum PseudoColor pseudo_color;
     enum SceneMode scene_mode;
-    enum FlipMode flip_mode;
-    enum AnalogVideoFormat av_format;
     uint8_t brightness;
     uint8_t contrast;
     uint8_t edge_enhancment_gear;
     uint8_t detail_enhancement_gear;
     bool burn_protection_en;
     bool auto_shutter_en;
+    bool breathing;
+} value_preset_t;
+
+typedef struct alignment_preset_t{
+    enum FlipMode flip_mode;
+    enum AnalogVideoFormat av_format;
     uint8_t zoom;
     uint16_t zoom_x;
     uint16_t zoom_y;
     enum DetectorRefreshRate fps;
-    bool breathing;
-} value_preset_t;
+} alignment_preset_t;
 
 uint16_t crc16_xmodem(uint8_t* data, size_t len);
 void Mini2_init(Mini2_t* cam);
@@ -104,4 +107,4 @@ esp_err_t Mini2_parameters_save(Mini2_t* cam);
 esp_err_t Mini2_restore_factory_parameters(Mini2_t* cam);
 esp_err_t Mini2_NUC(Mini2_t* cam);
 esp_err_t Mini2_Background_Correction(Mini2_t* cam);
-void Mini2_apply_preset(Mini2_t* cam, value_preset_t* preset);
+void Mini2_apply_preset(Mini2_t* cam, value_preset_t* preset, alignment_preset_t* alignment);

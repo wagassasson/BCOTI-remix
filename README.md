@@ -25,9 +25,13 @@ The BCOTI uses the Wi-Fi interface of the esp32 board to act as a web server to 
 
 6. Once you made all your changes, reboot the unit to run it on the normal mode. Then use the push button to cycle through your active presets.
 
+* If the local webpage won't load, try disabling your mobile-data, this is an issue with some OS that won't actually try and use the wifi network because it doesn't provide an internet connection. On IPhone this usually isn't an issue.
+
 ### Recommended Settings
 - Burn protection. This will automatically close the shutter of the thermal camera if you look at something very hot, like a fire, or the sun. Note that when the unit is not powered, the shutter is in the open position, so it's highly recommended you cover the lens when the unit is not in use. Very hot object can burn the actual sensor.
-- Auto Shutter. This will do Non-Uni
+- Auto Shutter. This will do Non-Uniformity-Correction (NUCing) based on conditions decided by the camera (temperature mostly).
+
+- 
 
 # Bill-of-materials
 Expect to pay about 400€ (EU) or about 500usd (US) for parts when buying in small quantities
@@ -56,6 +60,10 @@ If you do end up buying these parts, and are happy with the end result, I'd appr
 | Additional Part for lens clip  |        |                                                                                                        | Some of the mounting clip designs may require additional parts, like longer M2 screws, check the `CAD_Files/MountingClips/README.md` for more info.                                                                                                                                                                                                                                                                                                |
 
 # Build-Guide
+
+A full video guide is also available, but I'd recommend have the written instructions open aswell, as any comments or changes will be made there.
+
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/oMnXicHUu7w/0.jpg)](https://www.youtube.com/watch?v=oMnXicHUu7w)
 
 ## 3d printed parts
 
@@ -91,8 +99,8 @@ After the print, press fit the prism and DCX lens into the periscope. After chec
 Using Heat shrink for all connections where possible is recommended.
 
 1. Cut the cables of the USB-C port to a length of around 80mm.
-2. Cut a 1x 80mm piece of (Red) wire. And 3x 30mm pieces of (Red) Wire. These will be your 5V-net. Strip a portion of the installation on one side so that you can twist together the 3x short pieces, then cover in solder.
-3. Cut 5x 30mm pieces of black wire. These will be your ground-net. Strip one side and combine the 5pieces, same as you did for the 5v-net.
+2. Cut a 1x 80mm piece of (Red) wire. And 3x 40mm pieces of (Red) Wire. These will be your 5V-net. Strip a portion of the installation on one side so that you can twist together the 3x short pieces, then cover in solder.
+3. Cut 5x 40mm pieces of black wire. These will be your ground-net. Strip one side and combine the 5pieces, same as you did for the 5v-net.
 4. Solder the 80mm piece of (Red) wire, to the potentiometer's on-off-switch.
 <br>
 <img src="Resources/Electronics_Steps_Pictures/Poti_on_off_switch.jpg" alt="Poti_On_Off_Switch" width="450"/>

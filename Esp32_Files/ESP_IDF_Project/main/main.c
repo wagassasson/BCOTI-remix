@@ -40,6 +40,7 @@ int8_t brightness_button_count = 0;
 
 typedef struct stored_values_t{
     uint8_t active_preset;
+    alignment_preset_t alignment;
     value_preset_t presets[PRESET_COUNT];
 } stored_values_t;
 
@@ -47,19 +48,24 @@ value_preset_t default_preset = {
     .preset_en = false,
     .pseudo_color = WHOT,
     .scene_mode = Outline,
-    .flip_mode = X_Flip,
-    .av_format = PAL,
     .contrast = 50,
     .edge_enhancment_gear = 1,
     .detail_enhancement_gear = 50,
     .burn_protection_en = true,
     .auto_shutter_en = true,
-    .fps = Hz50,
     .breathing = false,
 };
 
 stored_values_t stored = {
     .active_preset = 0,
+    .alignment = {
+        .zoom = 10,
+        .zoom_x = 128,
+        .zoom_y = 96,
+        .av_format = PAL,
+        .flip_mode = X_Flip,
+        .fps = Hz50,
+    }
 };
 
 Mini2_t cam = {
@@ -140,7 +146,7 @@ static void loop_task(void *pvParameters) {
             Mini2_set_brightness(&cam, (int)(wave_value * (float)max_gain));
         }
         if (stored.active_preset != last_seen_preset) {
-            Mini2_apply_preset(&cam, &stored.presets[stored.active_preset]);
+            Mini2_apply_preset(&cam, &stored.presets[stored.active_preset], &stored.alignment);
             last_seen_preset = stored.active_preset;
         }
         vTaskDelay(pdMS_TO_TICKS(50));
@@ -175,7 +181,7 @@ static esp_err_t post_handler(httpd_req_t *req) {
     if (ret == OS_SUCCESS) {
         Mini2_set_color_pallet(&cam, (enum PseudoColor)value);
         stored.presets[stored.active_preset].pseudo_color = (enum PseudoColor)value;
-        Mini2_set_flip_mode(&cam, stored.presets[stored.active_preset].flip_mode);
+        Mini2_set_flip_mode(&cam, stored.alignment.flip_mode);
     }
     ret = json_obj_get_int(&jctx, "scene_mode", &value);
     if (ret == OS_SUCCESS) {
@@ -185,12 +191,12 @@ static esp_err_t post_handler(httpd_req_t *req) {
     ret = json_obj_get_int(&jctx, "flip_mode", &value);
     if (ret == OS_SUCCESS) {
         Mini2_set_flip_mode(&cam, (enum FlipMode)value);
-        stored.presets[stored.active_preset].flip_mode = (enum FlipMode)value;
+        stored.alignment.flip_mode = (enum FlipMode)value;
     }
     ret = json_obj_get_int(&jctx, "av_format", &value);
     if (ret == OS_SUCCESS) {
         Mini2_set_analog_video_format(&cam, (enum AnalogVideoFormat)value);
-        stored.presets[stored.active_preset].av_format = (enum PseudoColor)value;
+        stored.alignment.av_format = (enum PseudoColor)value;
     }
     /* Brightness is done via Poti, so no need
             ret = json_obj_get_int(&jctx, "brightness", &value);
@@ -246,9 +252,9 @@ static esp_err_t post_handler(httpd_req_t *req) {
         int x, y, zoom;
         if (json_obj_get_int(&jctx, "x", &x) == OS_SUCCESS && json_obj_get_int(&jctx, "y", &y) == OS_SUCCESS && json_obj_get_int(&jctx, "zoom", &zoom) == OS_SUCCESS) {
             Mini2_set_point_zoom(&cam, (uint16_t)x, (uint16_t)y, (uint8_t)zoom);
-            stored.presets[stored.active_preset].zoom = zoom;
-            stored.presets[stored.active_preset].zoom_x = x;
-            stored.presets[stored.active_preset].zoom_y = y;
+            stored.alignment.zoom = zoom;
+            stored.alignment.zoom_x = x;
+            stored.alignment.zoom_y = y;
         }
         json_obj_leave_object(&jctx);
     }
@@ -257,7 +263,7 @@ static esp_err_t post_handler(httpd_req_t *req) {
     if (ret == OS_SUCCESS) {
         if ((0 <= value) && (value < PRESET_COUNT)) {
             stored.active_preset = value;
-            Mini2_apply_preset(&cam, &stored.presets[stored.active_preset]);
+            Mini2_apply_preset(&cam, &stored.presets[stored.active_preset], &stored.alignment);
         } else {
             ESP_LOGE(TAG, "Active profile number would be out-of-bounds!");
         }   
@@ -328,11 +334,11 @@ static esp_err_t retireve_values(httpd_req_t *req) {
         (uint8_t)stored.presets[stored.active_preset].burn_protection_en,
         (uint8_t)stored.presets[stored.active_preset].auto_shutter_en,
         (uint8_t)stored.presets[stored.active_preset].breathing,
-        (uint8_t)stored.presets[stored.active_preset].flip_mode,
-        stored.presets[stored.active_preset].zoom,
-        stored.presets[stored.active_preset].zoom_x,
-        stored.presets[stored.active_preset].zoom_y,
-        stored.presets[stored.active_preset].av_format,
+        (uint8_t)stored.alignment.flip_mode,
+        stored.alignment.zoom,
+        stored.alignment.zoom_x,
+        stored.alignment.zoom_y,
+        stored.alignment.av_format,
         cam.variant.sensor_width,
         cam.variant.sensor_height
     );
@@ -377,16 +383,16 @@ void app_main(void) {
     ESP_ERROR_CHECK(nvs_flash_init());
 
     gpio_config_t io_conf = {
-        .intr_type = GPIO_INTR_NEGEDGE,   // or GPIO_INTR_POSEDGE, GPIO_INTR_ANYEDGE
+        .intr_type = GPIO_INTR_NEGEDGE,
         .mode = GPIO_MODE_INPUT,
-        .pin_bit_mask = (1ULL << MULTI_BTN),  // Replace GPIO_NUM_0 with your button GPIO
+        .pin_bit_mask = (1ULL << MULTI_BTN),
         .pull_down_en = GPIO_PULLDOWN_DISABLE,
-        .pull_up_en = GPIO_PULLUP_ENABLE,     // Enable pull-up if button connects to GND
+        .pull_up_en = GPIO_PULLUP_ENABLE,
     };
     gpio_config(&io_conf);
 
     button_debouce = esp_timer_get_time();
-    gpio_install_isr_service(0); // 0 for default configuration
+    gpio_install_isr_service(0);
 
     gpio_isr_handler_add(MULTI_BTN, button_isr_handler, NULL);
 
@@ -436,7 +442,7 @@ void app_main(void) {
     if (err != ESP_OK) {
         ESP_LOGI(TAG, "Failed to read stores from NVS, going with defaults.");
     }
-    Mini2_apply_preset(&cam, &stored.presets[stored.active_preset]);
+    Mini2_apply_preset(&cam, &stored.presets[stored.active_preset], &stored.alignment);
 
     xTaskCreate(loop_task, "loop task", 16384, NULL, 5, NULL);
 
