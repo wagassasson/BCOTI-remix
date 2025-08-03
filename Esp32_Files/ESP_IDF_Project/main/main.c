@@ -410,7 +410,6 @@ void app_main(void) {
                                                         &wifi_event_handler,
                                                         NULL,
                                                         NULL));
-        ESP_ERROR_CHECK( esp_wifi_set_storage(WIFI_STORAGE_RAM) );
         wifi_config_t wifi_config = {
             .ap = {
                 .ssid = SSID,
@@ -419,6 +418,9 @@ void app_main(void) {
                 .channel = 1,
                 .max_connection = 4,
                 .authmode = WIFI_AUTH_WPA2_PSK,
+                .pmf_cfg = {
+                    .required = true,
+                },
             }
         };
         ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
