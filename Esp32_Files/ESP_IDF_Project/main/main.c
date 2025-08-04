@@ -25,7 +25,7 @@
 #define UART_TX GPIO_NUM_1
 #define UART_RX GPIO_NUM_2
 #define POTI_PIN GPIO_NUM_4
-#define MULTI_BTN GPIO_NUM_21
+#define MULTI_BTN GPIO_NUM_8
 
 volatile int64_t button_debouce;
 
@@ -391,11 +391,6 @@ void app_main(void) {
     };
     gpio_config(&io_conf);
 
-    button_debouce = esp_timer_get_time();
-    gpio_install_isr_service(0);
-
-    gpio_isr_handler_add(MULTI_BTN, button_isr_handler, NULL);
-
     bool wifi_en = gpio_get_level(MULTI_BTN) == 0;
     ESP_LOGI(TAG, "Wifi: %d", (int)wifi_en);
 
@@ -461,4 +456,9 @@ void app_main(void) {
             httpd_register_uri_handler(server, &retireve_values_route);
         }
     }
+
+    button_debouce = esp_timer_get_time();
+    gpio_install_isr_service(0);
+
+    gpio_isr_handler_add(MULTI_BTN, button_isr_handler, NULL);
 }

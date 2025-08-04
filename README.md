@@ -61,7 +61,12 @@ If you do end up buying these parts, and are happy with the end result, I'd appr
 
 # Build-Guide
 
+## Build Guide Video
+
 A full video guide is also available, but I'd recommend have the written instructions open aswell, as any comments or changes will be made there.
+
+### Important Notes
+- The momentary push button is now connected to GPIO8 (was GPIO21)
 
 [![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/oMnXicHUu7w/0.jpg)](https://www.youtube.com/watch?v=oMnXicHUu7w)
 
