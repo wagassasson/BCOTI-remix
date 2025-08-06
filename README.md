@@ -1,7 +1,7 @@
 # BCOTI (Budget-Clip-On-Thermal-Imager)
 This project is about building a Clip-On-Thermal-Imager (COTI) for Analog night vision goggles, similar to the Jerry-C, PAS29A/B, etc. yourself.
 
-The current version uses a 256x192@12um sensor with a 9.1mm lens. This combined with the LZE039 and 25mm DCX lens, gives you a 1x 17°x13° thermal overlay in your NVGs. At the moment the image is cropped to a 13°x13° Rectangle.
+The current version uses a 256x192@12um sensor with a 9.1mm lens. This combined with the LZE039 and 25mm DCX lens, gives you a 1x 17°x13° thermal overlay in your NVGs.
 
 Cropping it to a 13° circle is also an option by modifying the shape of the `Display_Spacer.step` model.
 
@@ -74,7 +74,7 @@ A full video guide is also available, but I'd recommend have the written instruc
 
 Using a dark material which absorbs light instead of reflecting it is highly recommend.
 
-1. Print the `Body_Shell.step`, and `CameraCag.step` with a basic 0.12mm layer height profile.
+1. Print the `Body_Shell.step`, and CameraCage (The fixed-focus, or manual-focus one, depending on which one you got, Hdaniee doesn't seems to be consistent with the style of lens they ship) with a basic 0.12mm layer height profile.
 Change the following
     1. Wall-loops to 3x or 4x. 
     2. Infill to about 22% to 35%
@@ -119,7 +119,7 @@ Using Heat shrink for all connections where possible is recommended.
 
 7. Connect ground wires to the push-button, and on-off-on toggle switch.
 
-8. Cut a 50mm piece of wire, solder one end to the push button, and the other to under side, facing inwards to the esp32c3's GPIO21 pin.
+8. Cut a 50mm piece of wire, solder one end to the push button, and the other to under side, facing inwards to the esp32c3's GPIO8 pin.
 <br>
 <img src="Resources/Electronics_Steps_Pictures/push_button.jpg" alt="Push_button" width="450"/>
 9. Cut the `brightness+` and `brightness-` cables of the display driver to a length of about 70mm, then attach them to the `on`-terminals of the toggle-switch.
