@@ -1,6 +1,6 @@
 # Flashing compiled binaries
 
-Flashing the esp32c3 super mini board via the web browser is only possilbe while having physcial accses to the "boot" button. Methode via esptool.py will also work via the usb-dataline pass through of the usb-c port on the housing. 
+Flashing the esp32c3 super mini board via the web browser is only possible while having physical access to the "boot" button. Methode via esptool.py will also work via the usb-dataline pass through of the usb-c port on the housing. 
 
 ## esptool.py
 
@@ -10,7 +10,7 @@ Use the following command to flash `esptool.py` (included in esp-idf, and arduin
 
 ## web browser
 
-1. Visit [esp.huhn.me](https://esp.huhn.me/) (recommend via chrome browser, others may not work)
+1. Visit [esp.huhn.me](https://esp.huhn.me/) (recommend via Chrome browser, others may not work)
 
 2. Hold down the boot button, then insert the usb cable, then let go of the button.
 

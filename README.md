@@ -25,13 +25,20 @@ The BCOTI uses the Wi-Fi interface of the esp32 board to act as a web server to 
 
 6. Once you made all your changes, reboot the unit to run it on the normal mode. Then use the push button to cycle through your active presets.
 
-* If the local webpage won't load, try disabling your mobile-data, this is an issue with some OS that won't actually try and use the wifi network because it doesn't provide an internet connection. On IPhone this usually isn't an issue.
+* If the local webpage won't load, try disabling your mobile-data, this is an issue with some OS that won't actually try and use the Wi-Fi network because it does not provide an internet connection. On IPhone this usually isn't an issue.
 
 ### Recommended Settings
-- Burn protection. This will automatically close the shutter of the thermal camera if you look at something very hot, like a fire, or the sun. Note that when the unit is not powered, the shutter is in the open position, so it's highly recommended you cover the lens when the unit is not in use. Very hot object can burn the actual sensor.
+- Burn protection. This will automatically close the shutter of the thermal camera if you look at something very hot, like a fire, or the sun. Note that when the unit is not powered, the shutter is in the open position, so it's highly recommended you cover the lens when the unit is not in use. Very hot object can burn the actual sensor. Burn protection has nothing to do with protecting your tube!
 - Auto Shutter. This will do Non-Uniformity-Correction (NUCing) based on conditions decided by the camera (temperature mostly).
 
-- 
+- Correct Brightness Setting. To get a good brightness setting, I'd recommend:
+    1. Use the potentiometer to fully turn down the brightness of the camera.
+    2. Set your display brightness one step below the step where you're able to see the shape of the display in IIT image.
+    3. Raise brightness to the desired threshold.
+
+    This may need to be done on the fly if you're environment changes, like when going from indoors, to outdoors.
+
+- Scene mode. While the Mini2 offer many scene modes, for the BCOTI only `Highlight` and `Outline` really make sense, adjust contest as you see fit.
 
 # Bill-of-materials
 Expect to pay about 400€ (EU) or about 500usd (US) for parts when buying in small quantities
@@ -63,7 +70,7 @@ If you do end up buying these parts, and are happy with the end result, I'd appr
 
 ## Build Guide Video
 
-A full video guide is also available, but I'd recommend have the written instructions open aswell, as any comments or changes will be made there.
+A full video guide is also available, but I'd recommend have the written instructions open as well, as any comments or changes will be made there.
 
 ### Important Notes
 - The momentary push button is now connected to GPIO8 (was GPIO21)
@@ -74,7 +81,7 @@ A full video guide is also available, but I'd recommend have the written instruc
 
 Using a dark material which absorbs light instead of reflecting it is highly recommend.
 
-1. Print the `Body_Shell.step`, and CameraCage (The fixed-focus, or manual-focus one, depending on which one you got, Hdaniee doesn't seems to be consistent with the style of lens they ship) with a basic 0.12mm layer height profile.
+1. Print the `Body_Shell.step`, and CameraCage (The fixed-focus, or manual-focus one, depending on which one you got, Hdaniee doesn't seem to be consistent with the style of lens they ship) with a basic 0.12mm layer height profile.
 Change the following
     1. Wall-loops to 3x or 4x. 
     2. Infill to about 22% to 35%
@@ -173,7 +180,4 @@ Using Heat shrink for all connections where possible is recommended.
     <br>
     <img src="Resources/Assembly_Steps/Allignment_check_oriantation.jpg" alt="bottom_hanging allignment" width="450"/>
 
-    2. If the thermal image is too far left or right, check that the camera cage is properly installed. This usually isn't an issue.
-
-    3. If the thermal image is too far up or down, you can reprint the CameraCage with a different offset. If the overlay it too high, the camera needs to look up more. I plan to have a way of mechanically adjusting the camera position via screws, but this is not ready yet.
-
+    2. Look at a far object (20m+ ideally), and check how well the overlay lines up with the IIT image. If the image is too far in a certain direction, the camera needs to face more towards that direction; so if the image is too far left, you need to tighten the left screws (and maybe loosen the right ones). You'll need to repeat this a few times until the overlay is well enough aligned. Should there not be enough play in the camera cage to properly line up the image, you can print the camera cage with a pitch or yaw offset, 0° to 2° pitch in 0.1°-steps are available in the `CAD_Files\Other_CameraCage_Offsets`-folder, but usually this isn't necessary.

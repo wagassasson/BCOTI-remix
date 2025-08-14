@@ -25,7 +25,7 @@ I've you have a device or lens type that is not support yet, feel free to reach 
 
 ### PVS14_FrontLens_Clip.step
 - Uses an M2 screw to clamp on the objective lens itself, this isn't ideal, as mounting the BCOTI can also mess with the focus of your lens. 
-This does allows for pretty much any housing using standard (non-RPO style) PVS14 glass to use the BCOTI, at the cost of a non-ideal mounting position.
+This does allow for pretty much any housing using standard (non-RPO style) PVS14 glass to use the BCOTI, at the cost of a non-ideal mounting position.
 - Requires 1x M2 insert, and an M2 screw with a length of 12mm or longer. The Side with the small X is the side you put the insert into.
 
 ### PVS1531_Shell_Clip.step

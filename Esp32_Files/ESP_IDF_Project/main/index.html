@@ -282,7 +282,25 @@
     </div>
   </div>
   <script>
+    let sensor_width = 256;
+    let sensor_height = 192;
+
+    function updateZoomLimits() {
+      const zoom = document.getElementById("zoom");
+      const zoom_x = document.getElementById("zoom_x");
+      const zoom_y = document.getElementById("zoom_y");
+
+      const x_room = Math.ceil((sensor_width - (sensor_width / (parseInt(zoom.value, 10) / 10))) / 2);
+      const y_room = Math.ceil((sensor_height - (sensor_height / (parseInt(zoom.value, 10) / 10))) / 2);
+      zoom_x.min = (sensor_width / 2) - x_room;
+      zoom_x.max = (sensor_width / 2) + x_room;
+      zoom_y.min = (sensor_height / 2) - y_room;
+      zoom_y.max = (sensor_height / 2) + y_room;
+    }
+
     function updateZoom() {
+      updateZoomLimits();
+
       const zoom = parseInt(document.getElementById("zoom").value, 10);
       const zoom_x = parseInt(document.getElementById("zoom_x").value, 10);
       const zoom_y = parseInt(document.getElementById("zoom_y").value, 10);
@@ -330,9 +348,11 @@
         console.log("Syncing data:", data);
         for (const key in data) {
           if (key === "sensor_width") {
-            document.getElementById("zoom_x").max = data[key] - 1;
+            sensor_width = data[key];
+            updateZoomLimits();
           } else if (key === "sensor_height") {
-            document.getElementById("zoom_y").max = data[key] - 1;
+            sensor_height = data[key];
+            updateZoomLimits();
           } else if (key === "zoom_x") {
             document.getElementById("zoom_x").value = data[key];
           } else if (key === "zoom_y") {
