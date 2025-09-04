@@ -55,6 +55,43 @@ esp_err_t Mini2_write_command(Mini2_t* cam, uint8_t* cmd, size_t len) {
     return ESP_OK;
 }
 
+esp_err_t Mini2_read_command(Mini2_t* cam, uint8_t* cmd, size_t len, uint8_t* out_buf, size_t* out_len) {
+    esp_err_t err_code;
+
+    uart_flush(cam->uart_port);
+    err_code = Mini2_write_command(cam, cmd, len);
+    if (err_code != ESP_OK) {
+        return err_code;
+    }
+    int bytes_read = uart_read_bytes(cam->uart_port, out_buf, *out_len, pdMS_TO_TICKS(200));
+    if (bytes_read < 0) {
+        return ESP_FAIL;
+    }
+
+    ESP_LOG_BUFFER_HEXDUMP("UART_READ", out_buf, bytes_read, ESP_LOG_INFO);
+
+    *out_len = bytes_read;
+    return ESP_OK;
+}
+
+esp_err_t Mini2_get_flip_mode(Mini2_t* cam, enum FlipMode* flip_mode_out) {
+    uint8_t rx_buffer[10];
+    size_t len = sizeof(rx_buffer);
+
+    uint8_t cmd[] = {0x10, 0x10, 0x83, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01};
+    esp_err_t err_code = Mini2_read_command(cam, cmd, sizeof(cmd), rx_buffer, &len);
+    if (err_code != ESP_OK) {
+        return err_code;
+    }
+    
+    if (!(rx_buffer[0] == 0xBE && rx_buffer[1] == 0xAA && rx_buffer[8] == 0xEB && rx_buffer[9] == 0xAA)) {
+        return ESP_FAIL;
+    }
+
+    *flip_mode_out = (enum FlipMode)rx_buffer[5];
+    return ESP_OK;
+}
+
 esp_err_t Mini2_set_color_pallet(Mini2_t* cam, enum PseudoColor pseudo_color) {
     uint8_t cmd[] = {0x10, 0x03, 0x45, 0x00, 0x00, pseudo_color};
     return Mini2_write_command(cam, cmd, sizeof(cmd));
@@ -211,5 +248,8 @@ void Mini2_apply_preset(Mini2_t* cam, value_preset_t* preset, alignment_preset_t
         Mini2_set_point_zoom(cam, alignment->zoom_x, alignment->zoom_y, alignment->zoom);
     }
     Mini2_set_detector_fps(cam, alignment->fps);
+
+    uart_wait_tx_done(cam->uart_port, pdMS_TO_TICKS(500));
+
     Mini2_set_flip_mode(cam, alignment->flip_mode);
 }

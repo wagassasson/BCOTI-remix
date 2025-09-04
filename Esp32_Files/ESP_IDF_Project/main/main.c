@@ -65,6 +65,7 @@ stored_values_t stored = {
         .av_format = PAL,
         .flip_mode = X_Flip,
         .fps = Hz50,
+        .refresh_flip_mode = false,
     }
 };
 
@@ -131,6 +132,9 @@ static void loop_task(void *pvParameters) {
 
     ESP_ERROR_CHECK(adc_oneshot_config_channel(adc_handle, channel, &config));
 
+    int64_t last_flip_check = esp_timer_get_time();
+    #define FLIP_CHECK_INTERVAL (5 * 1000 * 1000)
+
     while (true) {
         adc_oneshot_read(adc_handle, channel, &adc_raw);
         if (abs(adc_raw - last_adc_val) >= 100) {
@@ -149,9 +153,13 @@ static void loop_task(void *pvParameters) {
             Mini2_apply_preset(&cam, &stored.presets[stored.active_preset], &stored.alignment);
             last_seen_preset = stored.active_preset;
         }
+        if (stored.alignment.refresh_flip_mode && esp_timer_get_time() - last_flip_check > FLIP_CHECK_INTERVAL) {
+            last_flip_check = esp_timer_get_time();
+            
+            Mini2_set_flip_mode(&cam, stored.alignment.flip_mode);
+        }
         vTaskDelay(pdMS_TO_TICKS(50));
     }
-    
 }
 
 static esp_err_t post_handler(httpd_req_t *req) {
@@ -187,6 +195,7 @@ static esp_err_t post_handler(httpd_req_t *req) {
     if (ret == OS_SUCCESS) {
         Mini2_set_scene_mode(&cam, (enum SceneMode)value);
         stored.presets[stored.active_preset].scene_mode = (enum PseudoColor)value;
+        Mini2_set_flip_mode(&cam, stored.alignment.flip_mode);
     }
     ret = json_obj_get_int(&jctx, "flip_mode", &value);
     if (ret == OS_SUCCESS) {
@@ -236,6 +245,11 @@ static esp_err_t post_handler(httpd_req_t *req) {
     ret = json_obj_get_bool(&jctx, "breathing", &bool_val);
     if (ret == OS_SUCCESS) {
         stored.presets[stored.active_preset].breathing = bool_val;
+    }
+
+    ret = json_obj_get_bool(&jctx, "refresh_flip_mode", &bool_val);
+    if (ret == OS_SUCCESS) {
+        stored.alignment.refresh_flip_mode = bool_val;
     }
 
     ret = json_obj_get_bool(&jctx, "preset_en", &bool_val);
@@ -317,7 +331,8 @@ static esp_err_t retireve_values(httpd_req_t *req) {
     \"zoom_y\": %u, \
     \"av_format\": %u, \
     \"sensor_width\": %u, \
-    \"sensor_height\": %u \
+    \"sensor_height\": %u, \
+    \"refresh_flip_mode\": %u \
     }";
 
     char out_json[512];
@@ -340,7 +355,8 @@ static esp_err_t retireve_values(httpd_req_t *req) {
         stored.alignment.zoom_y,
         stored.alignment.av_format,
         cam.variant.sensor_width,
-        cam.variant.sensor_height
+        cam.variant.sensor_height,
+        stored.alignment.refresh_flip_mode
     );
 
     if (res <= 0) {

@@ -83,12 +83,14 @@ typedef struct alignment_preset_t{
     uint16_t zoom_x;
     uint16_t zoom_y;
     enum DetectorRefreshRate fps;
+    bool refresh_flip_mode;
 } alignment_preset_t;
 
 uint16_t crc16_xmodem(uint8_t* data, size_t len);
 void Mini2_init(Mini2_t* cam);
 esp_err_t Mini2_set_color_pallet(Mini2_t* cam, enum PseudoColor pseudo_color);
 esp_err_t Mini2_set_scene_mode(Mini2_t* cam, enum SceneMode scene_mode);
+esp_err_t Mini2_get_flip_mode(Mini2_t* cam, enum FlipMode* flip_mode_out);
 esp_err_t Mini2_set_flip_mode(Mini2_t* cam, enum SceneMode FlipMode);
 esp_err_t Mini2_set_analog_video_format(Mini2_t* cam, enum AnalogVideoFormat av_format);
 esp_err_t Mini2_set_brightness(Mini2_t* cam, uint8_t brightness);
