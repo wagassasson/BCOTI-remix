@@ -232,11 +232,13 @@ esp_err_t Mini2_Background_Correction(Mini2_t* cam) {
     return Mini2_write_command(cam, cmd, sizeof(cmd));
 }
 
-void Mini2_apply_preset(Mini2_t* cam, value_preset_t* preset, alignment_preset_t* alignment) {
-    Mini2_set_analog_video_format(cam, alignment->av_format);
+void Mini2_apply_preset(Mini2_t* cam, value_preset_t* preset, alignment_preset_t* alignment, bool seem_less) {
+    if (!seem_less) {
+        Mini2_set_analog_video_format(cam, alignment->av_format);
+    }
 
     Mini2_set_scene_mode(cam, preset->scene_mode);
-    // Mini2_set_brightness(cam, preset->brightness);
+    // Mini2_set_brightness(cam, preset->brightness); // Brightness is handeld seperatly for BCOTI
     Mini2_set_contrast(cam, preset->contrast);
     Mini2_set_edge_enhancment(cam, preset->edge_enhancment_gear);
     Mini2_set_detail_enhancement(cam, preset->detail_enhancement_gear);
@@ -244,12 +246,18 @@ void Mini2_apply_preset(Mini2_t* cam, value_preset_t* preset, alignment_preset_t
     Mini2_set_auto_shutter(cam, preset->auto_shutter_en);
     Mini2_set_color_pallet(cam, preset->pseudo_color);
 
-    if (alignment->flip_mode == No_Flip) {
-        Mini2_set_point_zoom(cam, alignment->zoom_x, alignment->zoom_y, alignment->zoom);
+    if (!seem_less) {
+        Mini2_set_detector_fps(cam, alignment->fps);
     }
-    Mini2_set_detector_fps(cam, alignment->fps);
 
-    uart_wait_tx_done(cam->uart_port, pdMS_TO_TICKS(500));
-
-    Mini2_set_flip_mode(cam, alignment->flip_mode);
+    for (int i=0; i<3; i++) { // Newer Cam modules seem to have an issue with getting the command, but not applying it, resending insures that is does.
+        if (alignment->flip_mode == No_Flip) {
+            Mini2_set_flip_mode(cam, No_Flip);
+            Mini2_set_point_zoom(cam, alignment->zoom_x, alignment->zoom_y, alignment->zoom);
+        } else {
+            Mini2_set_centre_zoom(cam, 10);
+            Mini2_set_flip_mode(cam, alignment->flip_mode);
+        }
+        vTaskDelay(pdMS_TO_TICKS(50));
+    }
 }

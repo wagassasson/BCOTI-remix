@@ -88,7 +88,7 @@ static void wifi_event_handler(void* arg, esp_event_base_t event_base, int32_t e
     }
 }
 
-void next_preset() { // Preset0 is always seen  active, otherwise the esp32 could crash because it got stuck in a loop during ISR
+void next_preset() { // Preset0 is always seen as active, otherwise the esp32 could crash because it got stuck in a loop during ISR
     stored.active_preset = (stored.active_preset + 1) % PRESET_COUNT;
     if (stored.active_preset != 0 && !stored.presets[stored.active_preset].preset_en) {
         next_preset();
@@ -103,11 +103,13 @@ void IRAM_ATTR button_isr_handler(void* arg) {
 }
 
 static void loop_task(void *pvParameters) {
+    vTaskDelay(pdMS_TO_TICKS(2000));
+
     int max_gain = 0;
     int64_t breathing_time_out = 0;
     #define breathing_pause_time_us (2 * 1000 * 1000)
 
-    uint8_t last_seen_preset = stored.active_preset;
+    uint8_t last_seen_preset = 255;
 
     adc_unit_t unit;
     adc_channel_t channel;
@@ -150,8 +152,14 @@ static void loop_task(void *pvParameters) {
             Mini2_set_brightness(&cam, (int)(wave_value * (float)max_gain));
         }
         if (stored.active_preset != last_seen_preset) {
-            Mini2_apply_preset(&cam, &stored.presets[stored.active_preset], &stored.alignment);
+            Mini2_apply_preset(&cam, &stored.presets[stored.active_preset], &stored.alignment, true);
             last_seen_preset = stored.active_preset;
+            esp_err_t err = nvs_set_blob(flash_handle, "stored_values", &stored, sizeof(stored_values_t));
+            if (err == ESP_OK) {
+                ESP_LOGI(TAG, "Stored values in NVS");
+            } else {
+                ESP_LOGE(TAG, "Unable to store values in NVS");
+            }
         }
         if (stored.alignment.refresh_flip_mode && esp_timer_get_time() - last_flip_check > FLIP_CHECK_INTERVAL) {
             last_flip_check = esp_timer_get_time();
@@ -277,7 +285,7 @@ static esp_err_t post_handler(httpd_req_t *req) {
     if (ret == OS_SUCCESS) {
         if ((0 <= value) && (value < PRESET_COUNT)) {
             stored.active_preset = value;
-            Mini2_apply_preset(&cam, &stored.presets[stored.active_preset], &stored.alignment);
+            Mini2_apply_preset(&cam, &stored.presets[stored.active_preset], &stored.alignment, true);
         } else {
             ESP_LOGE(TAG, "Active profile number would be out-of-bounds!");
         }   
@@ -437,11 +445,9 @@ void app_main(void) {
         ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
         ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &wifi_config) );
         ESP_ERROR_CHECK(esp_wifi_start());
-
-        vTaskDelay(pdMS_TO_TICKS(2000));
-    } else {
-        vTaskDelay(pdMS_TO_TICKS(5000));
     }
+
+    vTaskDelay(pdMS_TO_TICKS(5000));
 
     for (int i=0; i<PRESET_COUNT; i++) {
         stored.presets[i] = default_preset;
@@ -455,7 +461,7 @@ void app_main(void) {
     if (err != ESP_OK) {
         ESP_LOGI(TAG, "Failed to read stores from NVS, going with defaults.");
     }
-    Mini2_apply_preset(&cam, &stored.presets[stored.active_preset], &stored.alignment);
+    Mini2_apply_preset(&cam, &stored.presets[stored.active_preset], &stored.alignment, false);
 
     xTaskCreate(loop_task, "loop task", 16384, NULL, 5, NULL);
 

@@ -109,4 +109,4 @@ esp_err_t Mini2_parameters_save(Mini2_t* cam);
 esp_err_t Mini2_restore_factory_parameters(Mini2_t* cam);
 esp_err_t Mini2_NUC(Mini2_t* cam);
 esp_err_t Mini2_Background_Correction(Mini2_t* cam);
-void Mini2_apply_preset(Mini2_t* cam, value_preset_t* preset, alignment_preset_t* alignment);
+void Mini2_apply_preset(Mini2_t* cam, value_preset_t* preset, alignment_preset_t* alignment, bool seem_less);
