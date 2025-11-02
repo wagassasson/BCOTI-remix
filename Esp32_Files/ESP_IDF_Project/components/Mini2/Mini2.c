@@ -270,6 +270,7 @@ void Mini2_apply_preset(Mini2_t* cam, value_preset_t* preset, alignment_preset_t
             ESP_LOGI(Mini2_TAG, "Format already matches, no need to send again.");
         } else {
             ESP_LOGE(Mini2_TAG, "Failed to read av format, or found missmatch");
+            Mini2_set_digital_video_format(cam, true, UsbProgressive, Hz50);
             Mini2_set_analog_video_format(cam, alignment->av_format);
             Mini2_save_video(cam);
         }

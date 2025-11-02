@@ -42,6 +42,7 @@ typedef struct stored_values_t{
     uint8_t active_preset;
     alignment_preset_t alignment;
     value_preset_t presets[PRESET_COUNT];
+    bool first_boot;
 } stored_values_t;
 
 value_preset_t default_presets[] = {
@@ -102,7 +103,8 @@ stored_values_t stored = {
         .flip_mode = X_Flip,
         .fps = Hz50,
         .refresh_flip_mode = false,
-    }
+    },
+    .first_boot = true
 };
 
 Mini2_t cam = {
@@ -353,6 +355,10 @@ static esp_err_t post_handler(httpd_req_t *req) {
     json_parse_end(&jctx);
     free(buf);
 
+    if (stored.first_boot) {
+        stored.first_boot = false;
+    }
+
     esp_err_t err = nvs_set_blob(flash_handle, "stored_values", &stored, sizeof(stored_values_t));
     if (err == ESP_OK) {
         ESP_LOGI(TAG, "Stored values in NVS");
@@ -457,7 +463,7 @@ void app_main(void) {
     };
     gpio_config(&io_conf);
 
-    bool wifi_en = gpio_get_level(MULTI_BTN) == 0;
+    bool wifi_en = (gpio_get_level(MULTI_BTN) == 0) || (stored.first_boot);
     ESP_LOGI(TAG, "Wifi: %d", (int)wifi_en);
 
     if (wifi_en) {
