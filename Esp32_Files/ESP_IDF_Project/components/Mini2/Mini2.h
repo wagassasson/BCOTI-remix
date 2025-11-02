@@ -63,6 +63,14 @@ enum AnalogVideoFormat {
     PAL = 0x1,
 };
 
+enum DigitalVideoFormat {
+    UsbProgressive = 0x00,
+    DvpProgressive = 0x01,
+    Bt656Progressive = 0x02,
+    bt656Interlaced = 0x12,
+    MipiProgressive = 0x03,
+};
+
 typedef struct value_preset_t{
     bool preset_en;
     enum PseudoColor pseudo_color;
@@ -93,6 +101,9 @@ esp_err_t Mini2_set_scene_mode(Mini2_t* cam, enum SceneMode scene_mode);
 esp_err_t Mini2_get_flip_mode(Mini2_t* cam, enum FlipMode* flip_mode_out);
 esp_err_t Mini2_set_flip_mode(Mini2_t* cam, enum SceneMode FlipMode);
 esp_err_t Mini2_set_analog_video_format(Mini2_t* cam, enum AnalogVideoFormat av_format);
+esp_err_t Mini2_get_analog_video_format(Mini2_t* cam, enum AnalogVideoFormat* av_format_out);
+esp_err_t Mini2_set_digital_video_format(Mini2_t* cam, bool enabled, enum DigitalVideoFormat video_format, enum DetectorRefreshRate fps);
+esp_err_t Mini2_save_video(Mini2_t* cam);
 esp_err_t Mini2_set_brightness(Mini2_t* cam, uint8_t brightness);
 esp_err_t Mini2_set_contrast(Mini2_t* cam, uint8_t contrast);
 esp_err_t Mini2_set_edge_enhancment(Mini2_t* cam, uint8_t gear);

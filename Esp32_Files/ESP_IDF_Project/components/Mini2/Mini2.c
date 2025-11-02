@@ -112,6 +112,34 @@ esp_err_t Mini2_set_analog_video_format(Mini2_t* cam, enum AnalogVideoFormat av_
     return Mini2_write_command(cam, cmd, sizeof(cmd));
 }
 
+esp_err_t Mini2_get_analog_video_format(Mini2_t* cam, enum AnalogVideoFormat* av_format_out) {
+    uint8_t rx_buffer[11];
+    size_t len = sizeof(rx_buffer);
+
+    uint8_t cmd[] = {0x10, 0x10, 0x8a, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02};
+    esp_err_t err_code = Mini2_read_command(cam, cmd, sizeof(cmd), rx_buffer, &len);
+    if (err_code != ESP_OK) {
+        return err_code;
+    }
+
+    if (!(rx_buffer[0] == 0xBE && rx_buffer[1] == 0xAA && rx_buffer[9] == 0xEB && rx_buffer[10] == 0xAA)) {
+        return ESP_FAIL;
+    }
+
+    *av_format_out = (enum AnalogVideoFormat)rx_buffer[6];
+    return ESP_OK;
+}
+
+esp_err_t Mini2_set_digital_video_format(Mini2_t* cam, bool enabled, enum DigitalVideoFormat video_format, enum DetectorRefreshRate fps) {
+    uint8_t cmd[] = {0x10, 0x10, 0x46, 0x00, (uint8_t)enabled, (uint8_t)video_format, (uint8_t)fps};
+    return Mini2_write_command(cam, cmd, sizeof(cmd));
+}
+
+esp_err_t Mini2_save_video(Mini2_t* cam) {
+    uint8_t cmd[] = {0x10, 0x10, 0x49};
+    return Mini2_write_command(cam, cmd, sizeof(cmd));
+}
+
 esp_err_t Mini2_set_brightness(Mini2_t* cam, uint8_t brightness) {
     if (brightness > 100) {
         ESP_LOGE(Mini2_TAG, "Brightness must be <= 100");
@@ -144,7 +172,7 @@ esp_err_t Mini2_set_detail_enhancement(Mini2_t* cam, uint8_t gear) {
         ESP_LOGE(Mini2_TAG, "Detail enhancement gear must be <= 100");
         return ESP_FAIL;
     }
-    uint8_t cmd[] = {0x10, 0x03, 0x85, 0x00, gear};
+    uint8_t cmd[] = {0x10, 0x04, 0x45, 0x00, gear};
     return Mini2_write_command(cam, cmd, sizeof(cmd));
 }
 
@@ -233,8 +261,18 @@ esp_err_t Mini2_Background_Correction(Mini2_t* cam) {
 }
 
 void Mini2_apply_preset(Mini2_t* cam, value_preset_t* preset, alignment_preset_t* alignment, bool seem_less) {
+    esp_err_t err;
+    
     if (!seem_less) {
-        Mini2_set_analog_video_format(cam, alignment->av_format);
+        enum AnalogVideoFormat format;
+        err = Mini2_get_analog_video_format(cam, &format);
+        if (err == ESP_OK && format == alignment->av_format) {
+            ESP_LOGI(Mini2_TAG, "Format already matches, no need to send again.");
+        } else {
+            ESP_LOGE(Mini2_TAG, "Failed to read av format, or found missmatch");
+            Mini2_set_analog_video_format(cam, alignment->av_format);
+            Mini2_save_video(cam);
+        }
     }
 
     Mini2_set_scene_mode(cam, preset->scene_mode);
@@ -242,9 +280,9 @@ void Mini2_apply_preset(Mini2_t* cam, value_preset_t* preset, alignment_preset_t
     Mini2_set_contrast(cam, preset->contrast);
     Mini2_set_edge_enhancment(cam, preset->edge_enhancment_gear);
     Mini2_set_detail_enhancement(cam, preset->detail_enhancement_gear);
-    Mini2_set_burn_protection(cam, preset->burn_protection_en);
-    Mini2_set_auto_shutter(cam, preset->auto_shutter_en);
-    Mini2_set_color_pallet(cam, preset->pseudo_color);
+    Mini2_set_burn_protection(cam, true);
+    Mini2_set_auto_shutter(cam, true);
+    Mini2_set_color_pallet(cam, WHOT);
 
     if (!seem_less) {
         Mini2_set_detector_fps(cam, alignment->fps);

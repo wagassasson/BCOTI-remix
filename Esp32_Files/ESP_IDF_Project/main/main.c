@@ -44,7 +44,43 @@ typedef struct stored_values_t{
     value_preset_t presets[PRESET_COUNT];
 } stored_values_t;
 
-value_preset_t default_preset = {
+value_preset_t default_presets[] = {
+    {
+        .preset_en = true,
+        .pseudo_color = WHOT,
+        .scene_mode = Highlight,
+        .contrast = 100,
+        .edge_enhancment_gear = 1,
+        .detail_enhancement_gear = 55,
+        .burn_protection_en = true,
+        .auto_shutter_en = true,
+        .breathing = false
+    },
+    {
+        .preset_en = true,
+        .pseudo_color = WHOT,
+        .scene_mode = HighContrast,
+        .contrast = 100,
+        .edge_enhancment_gear = 1,
+        .detail_enhancement_gear = 55,
+        .burn_protection_en = true,
+        .auto_shutter_en = true,
+        .breathing = false
+    },
+    {
+        .preset_en = true,
+        .pseudo_color = WHOT,
+        .scene_mode = Outline,
+        .contrast = 100,
+        .edge_enhancment_gear = 1,
+        .detail_enhancement_gear = 50,
+        .burn_protection_en = true,
+        .auto_shutter_en = true,
+        .breathing = false
+    }
+};
+
+value_preset_t base_preset = {
     .preset_en = false,
     .pseudo_color = WHOT,
     .scene_mode = Outline,
@@ -53,7 +89,7 @@ value_preset_t default_preset = {
     .detail_enhancement_gear = 50,
     .burn_protection_en = true,
     .auto_shutter_en = true,
-    .breathing = false,
+    .breathing = false
 };
 
 stored_values_t stored = {
@@ -248,6 +284,12 @@ static esp_err_t post_handler(httpd_req_t *req) {
     if (ret == OS_SUCCESS) {
         Mini2_set_auto_shutter(&cam, bool_val);
         stored.presets[stored.active_preset].auto_shutter_en = bool_val;
+    }
+
+    ret = json_obj_get_bool(&jctx, "resend", &bool_val);
+    if (ret == OS_SUCCESS && bool_val) {
+        Mini2_set_digital_video_format(&cam, true, UsbProgressive, Hz50);
+        Mini2_set_analog_video_format(&cam, PAL);
     }
 
     ret = json_obj_get_bool(&jctx, "breathing", &bool_val);
@@ -450,7 +492,11 @@ void app_main(void) {
     vTaskDelay(pdMS_TO_TICKS(5000));
 
     for (int i=0; i<PRESET_COUNT; i++) {
-        stored.presets[i] = default_preset;
+        if (i < (sizeof(default_presets) / sizeof(value_preset_t))) {
+            stored.presets[i] = default_presets[i];
+        } else {
+            stored.presets[i] = base_preset;
+        }
     }
     
     Mini2_init(&cam);
