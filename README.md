@@ -13,4 +13,6 @@ Magnets for QD https://a.co/d/hNtWK24
 
 I will add more info as I have time, but this is what I use.
 
+i was having trouple with the periscope not getting a clean square image so i altered the design slightly. you can still use the original from jacobs design from v2
+
 
