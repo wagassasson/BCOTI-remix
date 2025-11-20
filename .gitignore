@@ -1,5 +1,0 @@
-*.FCBak
-.idea/*
-Esp32_Files/ESP_IDF_Project/.vscode/*
-Esp32_Files/ESP_IDF_Project/.devcontainer/*
-Esp32_Files/ESP_IDF_Project/build/*
