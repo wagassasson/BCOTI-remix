@@ -8,6 +8,8 @@ USB-C for the power going into the unit https://www.amazon.com/Cermant-Connector
 
 Wire between units. This amount is enough for 10 kits, but it's the easiest option I’ve found to order.  https://www.amazon.com/dp/B0CGQ335HV?ref=ppx_yo2ov_dt_b_fed_asin_title&th=1 
 
+Magnets for QD https://www.amazon.com/dp/B0DMCLQ7YB?ref=ppx_yo2ov_dt_b_fed_asin_title&th=1
+
 I will add more info as I have time, but this is what I use.
 
 
