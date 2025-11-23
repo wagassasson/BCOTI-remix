@@ -7,7 +7,7 @@ You will need the following in addition to a V1 kit:
 USB-C for the power going into the unit https://a.co/d/36nSftv
 
 
-Wire between units. This amount is enough for 10 kits, but it's the easiest option I’ve found to order.  https://a.co/d/aI1NZ0L
+Wire between units. This amount is enough for 10 kits, but it's the easiest option I’ve found to order.  https://a.co/d/aI1NZ0L make sure to sellect the 24AWG 6C option
 
 Magnets for QD https://a.co/d/hNtWK24
 
